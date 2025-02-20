@@ -1,0 +1,23 @@
+[project]
+name = "social-network-inspiration"
+version = "0.1.0"
+description = "Netwok social inspiration"
+authors = [
+    {name = "mauro",email = "mauro_leao@hotmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django (>=5.1.6,<6.0.0)",
+    "psycopg2-binary (>=2.9.10,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+django = "^5.0"
+psycopg2-binary = "^2.9.9"
