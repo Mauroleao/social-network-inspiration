@@ -1,6 +1,6 @@
 
 from django.contrib.auth import authenticate
-from .models import CustomUser, Post, Follow
+from .models import CustomUser, Follow, Post
 from .serializer.serializers import UserRegistrationSerializer, PostSerializer
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -8,24 +8,45 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import AllowAny
 
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
+    permission_classes = [AllowAny]  # Permite acesso sem autenticação
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
 
 class UserLoginView(APIView):
-    def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-        user = authenticate(request, email=email, password=password)
-        if user:
-            token, _ = Token.objects.get_or_create(user=user)
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        # Primeiro tenta o campo "username"
+        username = request.data.get("username", None)
+        # Se não houver username, tenta com "email"
+        if not username:
+            email = request.data.get("email", None)
+            if email:
+                try:
+                    user_obj = CustomUser.objects.get(email=email)
+                    username = user_obj.username
+                except CustomUser.DoesNotExist:
+                    pass
+        password = request.data.get("password")
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            token, created = Token.objects.get_or_create(user=user)
             return Response({'token': token.key}, status=status.HTTP_200_OK)
-        return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)    
-# Create your views here.
-# Novo endpoint para criar e listar posts (tweets)
+        else:
+            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 class PostListCreateView(generics.ListCreateAPIView):
     queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
@@ -43,8 +64,8 @@ class FeedView(generics.ListAPIView):
         user = self.request.user
         if not user.is_authenticated:
             return Post.objects.none()
-        following_ids = Follow.objects.filter(follower=user).values_list('followed_id', flat=True)
-        return Post.objects.filter(user__id__in=following_ids).order_by('-created_at')
+        following_ids = list(Follow.objects.filter(follower=user).values_list('followed_id', flat=True))
+        return Post.objects.filter(user__pk__in=following_ids + [user.pk]).order_by('-created_at')
 
 # Novo endpoint para seguir/desseguir um usuário
 class FollowUserView(APIView):

@@ -1,40 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { getFeed, createPost } from './api';
+import { getFeed, createPost } from './api.js';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const [posts, setPosts] = useState([]);
-  const [newPostText, setNewPostText] = useState("");
-  
-  // Recupere o token que foi salvo no login
+  const [newPostText, setNewPostText] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const token = localStorage.getItem('authToken');
+  
+  console.log('Token obtained:', token);
 
-  // Função para atualizar o feed
   const fetchFeed = async () => {
     try {
       const data = await getFeed(token);
-      setPosts(data);
+      console.log('Feed data (raw):', data);
+      if(data.detail){ 
+        // Geralmente, se a autenticação falhar, o backend retorna {detail: "Mensagem"}.
+        setErrorMessage(data.detail);
+      } else {
+        setPosts(data);
+        setErrorMessage('');
+      }
     } catch (error) {
-      console.error("Erro ao buscar o feed:", error);
+      console.error('Error fetching feed:', error);
+      setErrorMessage('Erro ao buscar feed.');
     }
   };
 
   useEffect(() => {
-    if(token) {
+    if (token) {
       fetchFeed();
     }
   }, [token]);
 
-  // Função para criar um novo post
   const handleNewPost = async (e) => {
     e.preventDefault();
     if (!newPostText.trim()) return;
     try {
-      await createPost({ text: newPostText }, token);
-      setNewPostText("");
-      fetchFeed(); // Atualiza o feed após o novo post
+      console.log('Sending new post, token:', token);
+      const result = await createPost({ text: newPostText }, token);
+      console.log('Response from createPost (raw):', result);
+      if(result.detail){
+        // Se houver erro, normalmente vem em result.detail.
+        setErrorMessage(result.detail);
+      } else {
+        setNewPostText('');
+        setErrorMessage('');
+        fetchFeed();
+      }
     } catch (error) {
-      console.error("Erro ao criar novo post:", error);
+      console.error('Error creating new post:', error);
+      setErrorMessage('Erro ao criar post.');
     }
   };
 
@@ -64,6 +80,7 @@ const Dashboard = () => {
             ></textarea>
             <button type="submit" className="new-post-button">Tweetar</button>
           </form>
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
         </div>
         <div className="feed-content">
           {posts.length ? (
