@@ -1,23 +1,26 @@
-[project]
+[tool.poetry]
 name = "social-network-inspiration"
 version = "0.1.0"
-description = "Netwok social inspiration"
-authors = [
-    {name = "mauro",email = "mauro_leao@hotmail.com"}
+description = ""
+authors = ["Your Name <you@example.com>"]
+packages = [
+    { include = "backend" }
 ]
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "django (>=5.1.6,<6.0.0)",
-    "psycopg2-binary (>=2.9.10,<3.0.0)"
-]
-
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
-django = "^5.0"
-psycopg2-binary = "^2.9.9"
+django = "^5.1.6"
+psycopg2-binary = "^2.9.10"
+djangorestframework = "^3.15.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-django = "^4.7.0"
+black = "^24.1.1"
+isort = "^5.13.2"
+flake8 = "^7.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
